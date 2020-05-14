@@ -74,6 +74,7 @@ public class RainbowArrows : MonoBehaviour
 		display.color = new Color(1.0f, 1.0f, 1.0f);
 
 		bombModule.HandlePass();
+		currentCoroutine = null;
 	}
 
 	IEnumerator StartupAnimation()
@@ -644,7 +645,7 @@ public class RainbowArrows : MonoBehaviour
 	public IEnumerator ProcessTwitchCommand(string command)
 	{
 		List<string> cmds = command.Split(' ').ToList();
-		List<KMSelectable> presses = new List<KMSelectable>();
+		List<int> presses = new List<int>();
 		if (cmds.Count > 9)
 			yield break;
 
@@ -657,21 +658,21 @@ public class RainbowArrows : MonoBehaviour
 				yield break;
 			}
 			if      (Regex.IsMatch(cmds[i], @"^(?:U|T|TM|up|top|N|north|8)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[0]);
+				presses.Add(0);
 			else if (Regex.IsMatch(cmds[i], @"^(?:[UT]R|(?:up|top)-?right|NE|north-?east|9)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[1]);
+				presses.Add(1);
 			else if (Regex.IsMatch(cmds[i], @"^(?:MR|R|right|E|east|6)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[2]);
+				presses.Add(2);
 			else if (Regex.IsMatch(cmds[i], @"^(?:[DB]R|(?:down|bottom)-?right|SE|south-?east|3)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[3]);
+				presses.Add(3);
 			else if (Regex.IsMatch(cmds[i], @"^(?:D|B|BM|down|bottom|S|south|2)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[4]);
+				presses.Add(4);
 			else if (Regex.IsMatch(cmds[i], @"^(?:[DB]L|(?:down|bottom)-?left|SW|south-?west|1)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[5]);
+				presses.Add(5);
 			else if (Regex.IsMatch(cmds[i], @"^(?:ML|L|left|W|west|4)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[6]);
+				presses.Add(6);
 			else if (Regex.IsMatch(cmds[i], @"^(?:[UT]L|(?:up|top)-?left|NW|north-?west|7)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-				presses.Add(arrowButtons[7]);
+				presses.Add(7);
 			else if (Regex.IsMatch(cmds[i], @"^(?:M|MM|middle|middlemiddle|C|center|5)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
 			{
 				yield return String.Format("sendtochaterror Rainbows don't have a center...");
@@ -686,8 +687,13 @@ public class RainbowArrows : MonoBehaviour
 		if (presses.Count > 0)
 		{
 			yield return null;
-			KMSelectable[] pressArray = presses.ToArray();
-			yield return pressArray;
+			if (presses.Count == 1)
+				yield return new KMSelectable[] { arrowButtons[presses[0]] };
+			else for (int i = 0; i < presses.Count; ++i)
+			{
+				yield return String.Format("strikemessage pressing {0} (input #{1})", __positionText[presses[i]], i + 1);
+				yield return new KMSelectable[] { arrowButtons[presses[i]] };
+			}
 
 			if (moduleSolved)
 				yield return "solve";
@@ -695,15 +701,18 @@ public class RainbowArrows : MonoBehaviour
 		yield break;
 	}
 
-	void TwitchHandleForcedSolve()
+	public IEnumerator TwitchHandleForcedSolve()
 	{
 		if (moduleSolved)
-			return;
+			yield break;
 
-		Debug.LogFormat("[Rainbow Arrows #{0}] SOLVE: Force solve requested by Twitch Plays.", thisLogID);
-		moduleSolved = true;
-		if (currentCoroutine != null)
-			StopCoroutine(currentCoroutine);
-		currentCoroutine = StartCoroutine(SolveAnimation());
+		Debug.LogFormat("[Rainbow Arrows #{0}] Force solve requested by Twitch Plays.", thisLogID);
+		while (!moduleSolved)
+		{
+			arrowButtons[correctSequence[positionInSequence]].OnInteract();
+			yield return new WaitForSeconds(0.125f);
+		}
+		while (currentCoroutine != null)
+			yield return true;
 	}
 }
