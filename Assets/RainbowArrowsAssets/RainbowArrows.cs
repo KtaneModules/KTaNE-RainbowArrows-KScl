@@ -79,8 +79,6 @@ public class RainbowArrows : MonoBehaviour
 
 	IEnumerator StartupAnimation()
 	{
-		startColor = RNG.Range(0.0f, 1.0f);
-		display.color = Color.HSVToRGB(startColor, 1.0f, 1.0f);
 		display.text = "";
 		yield return new WaitForSeconds(0.5f);
 
@@ -505,6 +503,15 @@ public class RainbowArrows : MonoBehaviour
 
 	// -----
 
+	void ResetInput()
+	{
+		positionInSequence = 0;
+
+		if (currentCoroutine != null)
+			StopCoroutine(currentCoroutine);
+		currentCoroutine = StartCoroutine(StartupAnimation());
+	}
+
 	void GenerateSolution()
 	{
 		positionInSequence = 0;
@@ -553,6 +560,9 @@ public class RainbowArrows : MonoBehaviour
 			rule = (rule + (ccwRainbow ? 7 : 1)) % 8;
 		}
 
+		startColor = RNG.Range(0.0f, 1.0f);
+		display.color = Color.HSVToRGB(startColor, 1.0f, 1.0f);
+
 		if (currentCoroutine != null)
 			StopCoroutine(currentCoroutine);
 		currentCoroutine = StartCoroutine(StartupAnimation());
@@ -596,11 +606,10 @@ public class RainbowArrows : MonoBehaviour
 
 		if (button != correctSequence[positionInSequence])
 		{
-			Debug.LogFormat("[Rainbow Arrows #{0}] STRIKE: For input #{1}, you pressed {2} when I expected {3}.",
+			Debug.LogFormat("[Rainbow Arrows #{0}] STRIKE: For input #{1}, you pressed {2} when I expected {3}. Input reset.",
 				thisLogID, positionInSequence+1, __positionText[button], __positionText[correctSequence[positionInSequence]]);
 			bombModule.HandleStrike();
-			Debug.LogFormat("[Rainbow Arrows #{0}] The module is partially resetting due to a strike.", thisLogID);
-			GenerateSolution();
+			ResetInput();
 			return false;
 		}
 		if (++positionInSequence >= correctSequence.Length)
