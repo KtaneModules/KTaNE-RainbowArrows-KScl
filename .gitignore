@@ -31,12 +31,16 @@ sysinfo.txt
 Assets/Generated
 Gen
 
+# Modkit Assets
+Assets/Editor*
+Assets/Examples*
+Assets/KMAssets*
+Assets/Plugins*
+Assets/Scripts*
+Assets/TestHarness*
+Assets/KtaneMod.asmdef*
+
 # Additional content not related to mod
 /ProjectSettings/
-Assets/Editor/*
-Assets/Examples/*
-Assets/Plugins/*
-Assets/Scripts/*
-Assets/TestHarness/*
 steam_api64.dll
 steam_appid.txt
